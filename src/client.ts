@@ -230,24 +230,48 @@ export class IdlixClient {
       throw new Error(`Claim response missing claim or redeemUrl: ${JSON.stringify(claimData)}`);
     }
 
-    // 4. Redeem Pentos Stream from Majorplay CDN
-    const redeemRes = await this.client.fetch(claimData.redeemUrl, {
-      method: 'POST',
-      headers: {
-        'User-Agent': this.userAgent,
-        'Content-Type': 'application/json',
-        Origin: this.baseUrl,
-        Referer: `${this.baseUrl}/`,
-      },
-      body: JSON.stringify({
-        claim: claimData.claim,
-        mode: 'browser',
-      }),
-    });
+    // 4. Redeem Pentos Stream from IDLIX API / Majorplay CDN
+    let fullRedeemUrl: string;
+    if (claimData.redeemUrl.startsWith('http://') || claimData.redeemUrl.startsWith('https://')) {
+      fullRedeemUrl = claimData.redeemUrl;
+    } else {
+      // IDLIX web client routes relative paths (e.g. /watch/session/redeem) under /api
+      const apiPath = claimData.redeemUrl.startsWith('/api')
+        ? claimData.redeemUrl
+        : `/api${claimData.redeemUrl.startsWith('/') ? '' : '/'}${claimData.redeemUrl}`;
+      fullRedeemUrl = `${this.baseUrl}${apiPath}`;
+    }
+
+    const isInternalRedeem = fullRedeemUrl.startsWith(this.baseUrl);
+    const redeemRes = isInternalRedeem
+      ? await this.fetchWithCookies(fullRedeemUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json, text/plain, */*',
+          },
+          body: JSON.stringify({
+            claim: claimData.claim,
+            mode: 'browser',
+          }),
+        })
+      : await this.client.fetch(fullRedeemUrl, {
+          method: 'POST',
+          headers: {
+            'User-Agent': this.userAgent,
+            'Content-Type': 'application/json',
+            Origin: this.baseUrl,
+            Referer: `${this.baseUrl}/`,
+          },
+          body: JSON.stringify({
+            claim: claimData.claim,
+            mode: 'browser',
+          }),
+        });
 
     if (!redeemRes.ok) {
       const err = await redeemRes.text();
-      throw new Error(`Majorplay Redeem failed (${redeemRes.status}): ${err}`);
+      throw new Error(`Pentos Redeem failed (${redeemRes.status}): ${err}`);
     }
 
     const streamData = (await redeemRes.json()) as MajorplayRedeemResponse;

@@ -35,12 +35,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mmararief/idlix-resolver.git"
+    "url": "git+https://github.com/amayonaise/idlix-resolver.git"
   },
   "bugs": {
-    "url": "https://github.com/mmararief/idlix-resolver/issues"
+    "url": "https://github.com/amayonaise/idlix-resolver/issues"
   },
-  "homepage": "https://github.com/mmararief/idlix-resolver#readme",
+  "homepage": "https://github.com/amayonaise/idlix-resolver#readme",
   "dependencies": {
     "@clack/prompts": "^1.8.1",
     "impit": "^0.8.0",
